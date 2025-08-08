@@ -8,6 +8,8 @@
 # ==== CONFIG ====
 LOCAL_PORT=8080
 REMOTE_RPC="https://rpc-aztec.keywood.site"
+AZTECSCAN_API_KEY="temporary-api-key"
+AZTECSCAN_API_URL="https://api.testnet.aztecscan.xyz/v1/${AZTECSCAN_API_KEY}/l2/ui/blocks-for-table"
 CHECK_INTERVAL=10
 
 # ==== COLORS ====
@@ -24,7 +26,7 @@ C_CYAN="\033[36m"
 banner() {
     echo -e "${C_PURPLE}"
     echo "=========================================="
-    echo "       🌑 AZTEC NODE SYNC MONITOR 🌑       "
+    echo "    🌑 AZTEC NODE SYNC MONITOR (PERSONAL) "
     echo "=========================================="
     echo -e "${C_RESET}"
 }
@@ -39,6 +41,29 @@ get_remote_block() {
     curl -s -X POST -H "Content-Type: application/json" \
     -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":1}' \
     $REMOTE_RPC | jq -r ".result.proven.number" 2>/dev/null
+}
+
+get_aztecscan_block() {
+    local BATCH_SIZE=20
+    local LATEST_BLOCK=$(curl -s "$AZTECSCAN_API_URL?from=0&to=0" | jq -r '.[0].height')
+    if [[ -z "$LATEST_BLOCK" || "$LATEST_BLOCK" == "null" ]]; then
+        echo "N/A"
+        return
+    fi
+    local CURRENT_HEIGHT=$LATEST_BLOCK
+    while true; do
+        local FROM_HEIGHT=$((CURRENT_HEIGHT - BATCH_SIZE + 1))
+        [ $FROM_HEIGHT -lt 0 ] && FROM_HEIGHT=0
+        local MATCH=$(curl -s "$AZTECSCAN_API_URL?from=$FROM_HEIGHT&to=$CURRENT_HEIGHT" \
+            | jq -r '.[] | select(.blockStatus == 4) | .height' \
+            | sort -nr | head -n1)
+        if [[ -n "$MATCH" && "$MATCH" != "null" ]]; then
+            echo "$MATCH"
+            return
+        fi
+        CURRENT_HEIGHT=$((FROM_HEIGHT - 1))
+        [ $CURRENT_HEIGHT -lt 0 ] && echo "N/A" && return
+    done
 }
 
 percent() {
@@ -69,16 +94,26 @@ banner
 while true; do
     local_block=$(get_local_block)
     remote_block=$(get_remote_block)
+    aztecscan_block=$(get_aztecscan_block)
 
     now=$(date "+%Y-%m-%d %H:%M:%S")
     echo -e "${C_BLUE}[$now]${C_RESET}"
 
-    echo -e "   🧱 Local Block : ${C_CYAN}${local_block:-N/A}${C_RESET}"
-    echo -e "   🌍 Remote Block: ${C_GREEN}${remote_block:-N/A}${C_RESET}"
+    echo -e "   🧱 Local Block    : ${C_CYAN}${local_block:-N/A}${C_RESET}"
+    echo -e "   🌍 Remote RPC     : ${C_GREEN}${remote_block:-N/A}${C_RESET}"
+    echo -e "   📡 AztecScan API  : ${C_PURPLE}${aztecscan_block:-N/A}${C_RESET}"
 
-    sync_pct=$(percent "$local_block" "$remote_block")
-    echo -n "   📊 Status      : "
-    status_line "$sync_pct"
+    if [[ "$aztecscan_block" != "N/A" ]]; then
+        sync_pct=$(percent "$local_block" "$aztecscan_block")
+        echo -n "   📊 Status vs AztecScan : "
+        status_line "$sync_pct"
+    fi
+
+    if [[ "$remote_block" != "N/A" ]]; then
+        sync_pct2=$(percent "$local_block" "$remote_block")
+        echo -n "   📊 Status vs RemoteRPC : "
+        status_line "$sync_pct2"
+    fi
 
     echo "------------------------------------------"
     sleep $CHECK_INTERVAL
