@@ -1,13 +1,13 @@
 #!/bin/bash
 
 ########################################
-# Aztec Node Sync Watcher (Personal)
-# Author: Ridho (Custom Version)
+# Aztec Node Sync Watcher
+# Author: Keywood
 ########################################
 
 # ==== CONFIG ====
 LOCAL_PORT=8080
-REMOTE_RPC="https://api.testnet.aztec.network"
+REMOTE_RPC="https://rpc-aztec.keywood.site"
 CHECK_INTERVAL=10
 
 # ==== COLORS ====
