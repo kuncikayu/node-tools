@@ -5,14 +5,21 @@
 #  Author: Keywood
 #############################################
 
-# ==== COLORS ====
-C_RESET="\033[0m"
-C_GREEN="\033[32m"
-C_RED="\033[31m"
-C_BLUE="\033[34m"
-C_YELLOW="\033[33m"
-C_CYAN="\033[36m"
-C_PURPLE="\033[35m"
+# ==== FUNCTION TO CLEAN UP & EXIT ====
+cleanup_and_exit() {
+  echo -e "\n${C_RESET}Script interrupted."
+  exit 1
+}
+trap cleanup_and_exit INT TERM
+
+# ==== COLORS (Corrected for better compatibility) ====
+C_RESET=$'\033[0m'
+C_GREEN=$'\033[32m'
+C_RED=$'\033[31m'
+C_BLUE=$'\033[34m'
+C_YELLOW=$'\033[33m'
+C_CYAN=$'\033[36m'
+C_PURPLE=$'\033[35m'
 
 clear
 
