@@ -10,7 +10,7 @@ LOCAL_PORT=8080
 REMOTE_RPC="https://rpc-aztec.keywood.site"
 AZTECSCAN_API_KEY="temporary-api-key"
 AZTECSCAN_API_URL="https://api.testnet.aztecscan.xyz/v1/${AZTECSCAN_API_KEY}/l2/ui/blocks-for-table"
-CHECK_INTERVAL=10
+CHECK_INTERVAL=30
 
 # ==== COLORS ====
 C_RESET="\033[0m"
@@ -26,7 +26,7 @@ C_CYAN="\033[36m"
 banner() {
     echo -e "${C_PURPLE}"
     echo "=========================================="
-    echo "    🌑 AZTEC NODE SYNC MONITOR (PERSONAL) "
+    echo "    🌑 AZTEC NODE SYNC MONITOR By: Key    "
     echo "=========================================="
     echo -e "${C_RESET}"
 }
