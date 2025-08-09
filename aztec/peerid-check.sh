@@ -2,10 +2,7 @@
 
 #############################################
 #  AZTEC NODE PEERID & LOCATION CHECKER
-#  Author: Keywood
 #############################################
-
-clear
 
 # ==== COLORS ====
 C_RESET="\033[0m"
@@ -83,11 +80,11 @@ if [ -n "$peerid" ]; then
     last_local=$(date -d "$last" "+%Y-%m-%d - %H:%M" 2>/dev/null || echo "$last")
     first_local=$(date -d "$first" "+%Y-%m-%d - %H:%M" 2>/dev/null || echo "$first")
 
-    printf "%-12s: %s\n" "Last Seen"   "${C_CYAN}$last_local${C_RESET}"
-    printf "%-12s: %s\n" "First Seen"  "${C_CYAN}$first_local${C_RESET}"
-    printf "%-12s: %s\n" "Country"     "${C_YELLOW}$country${C_RESET}"
-    printf "%-12s: %s\n" "Latitude"    "${C_PURPLE}$lat${C_RESET}"
-    printf "%-12s: %s\n" "Longitude"   "${C_PURPLE}$lon${C_RESET}"
+    printf "%-12s: %b%s%b\n" "Last Seen"   "$C_CYAN"   "$last_local" "$C_RESET"
+    printf "%-12s: %b%s%b\n" "First Seen"  "$C_CYAN"   "$first_local" "$C_RESET"
+    printf "%-12s: %b%s%b\n" "Country"     "$C_YELLOW" "$country" "$C_RESET"
+    printf "%-12s: %b%s%b\n" "Latitude"    "$C_PURPLE" "$lat" "$C_RESET"
+    printf "%-12s: %b%s%b\n" "Longitude"   "$C_PURPLE" "$lon" "$C_RESET"
   else
     echo -e "${C_RED}No stats found for this PeerID on Nethermind Aztec Explorer.${C_RESET}"
   fi
