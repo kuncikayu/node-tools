@@ -1,67 +1,44 @@
 #!/bin/bash
 
-#############################################
-#  AZTEC NODE PEERID & LOCATION CHECKER
-#############################################
-
-# ==== COLORS ====
-C_RESET="\033[0m"
-C_GREEN="\033[32m"
-C_RED="\033[31m"
-C_BLUE="\033[34m"
-C_YELLOW="\033[33m"
-C_CYAN="\033[36m"
-C_PURPLE="\033[35m"
-
-# ==== BANNER ====
-echo -e "${C_PURPLE}"
+# Header
 echo "=========================================="
 echo "   🌑 AZTEC NODE PEERID & LOCATION CHECK  "
 echo "=========================================="
-echo -e "${C_RESET}"
+echo
 
-# ==== STEP 1: Get PeerID from 'aztec' container logs ====
-peerid=$(sudo docker logs $(docker ps -q --filter "name=aztec" | head -1) 2>&1 \
-  | grep -m 1 -ai 'DiscV5 service started' \
-  | grep -o '"peerId":"[^"]*"' \
-  | cut -d'"' -f4)
+# 1. Try to get peerID from container named 'aztec' using DiscV5 log
+peerid=$(sudo docker logs $(docker ps -q --filter "name=aztec" | head -1) 2>&1 | \
+  grep -m 1 -ai 'DiscV5 service started' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
 
-# ==== STEP 2: Try any running container with 'aztec' image if not found ====
+# 2. If not found, try any running container with 'aztec' in its image name
 if [ -z "$peerid" ]; then
-  container_id=$(sudo docker ps \
-    --filter "ancestor=$(sudo docker images --format '{{.Repository}}:{{.Tag}}' | grep aztec | head -1)" \
-    -q | head -1)
-  if [ -n "$container_id" ]; then
-    peerid=$(sudo docker logs $container_id 2>&1 \
-      | grep -m 1 -ai 'DiscV5 service started' \
-      | grep -o '"peerId":"[^"]*"' \
-      | cut -d'"' -f4)
+  container_id=$(sudo docker ps --filter "ancestor=$(sudo docker images --format '{{.Repository}}:{{.Tag}}' | grep aztec | head -1)" -q | head -1)
+  if [ ! -z "$container_id" ]; then
+    peerid=$(sudo docker logs $container_id 2>&1 | \
+      grep -m 1 -ai 'DiscV5 service started' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
   fi
 fi
 
-# ==== STEP 3: Last resort - any 'peerId' log in container name with aztec ====
+# 3. As a last resort, search for any peerId log line in a container with "aztec" in the name
 if [ -z "$peerid" ]; then
-  peerid=$(sudo docker logs $(docker ps -q --filter "name=aztec" | head -1) 2>&1 \
-    | grep -m 1 -ai '"peerId"' \
-    | grep -o '"peerId":"[^"]*"' \
-    | cut -d'"' -f4)
+  peerid=$(sudo docker logs $(docker ps -q --filter "name=aztec" | head -1) 2>&1 | \
+    grep -m 1 -ai '"peerId"' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
 fi
 
-# ==== DISPLAY RESULT ====
-if [ -n "$peerid" ]; then
-  label=" ● PeerID"
-  peerline="✓ $peerid"
-  width=${#peerline}
-  [ ${#label} -gt $width ] && width=${#label}
-  line=$(printf '=%.0s' $(seq 1 $width))
+label=" ● PeerID"
+peerline="✓ $peerid"
+width=${#peerline}
+[ ${#label} -gt $width ] && width=${#label}
+line=$(printf '=%.0s' $(seq 1 $width))
 
+if [ -n "$peerid" ]; then
   echo "$line"
   echo -e "$label"
-  echo -e "${C_GREEN}$peerline${C_RESET}"
+  echo -e "\e[1;32m$peerline\e[0m"
   echo "$line"
   echo
 
-  echo -e "${C_BLUE}Fetching stats from Nethermind Aztec Explorer...${C_RESET}"
+  echo -e "\e[1;34mFetching stats from Nethermind Aztec Explorer...\e[0m"
   response=$(curl -s "https://aztec.nethermind.io/api/peers?page_size=30000&latest=true")
 
   stats=$(echo "$response" | jq -r --arg peerid "$peerid" '
@@ -80,14 +57,14 @@ if [ -n "$peerid" ]; then
     last_local=$(date -d "$last" "+%Y-%m-%d - %H:%M" 2>/dev/null || echo "$last")
     first_local=$(date -d "$first" "+%Y-%m-%d - %H:%M" 2>/dev/null || echo "$first")
 
-    printf "%-12s: %b%s%b\n" "Last Seen"   "$C_CYAN"   "$last_local" "$C_RESET"
-    printf "%-12s: %b%s%b\n" "First Seen"  "$C_CYAN"   "$first_local" "$C_RESET"
-    printf "%-12s: %b%s%b\n" "Country"     "$C_YELLOW" "$country" "$C_RESET"
-    printf "%-12s: %b%s%b\n" "Latitude"    "$C_PURPLE" "$lat" "$C_RESET"
-    printf "%-12s: %b%s%b\n" "Longitude"   "$C_PURPLE" "$lon" "$C_RESET"
+    echo -e "Last Seen   : \e[36m$last_local\e[0m"
+    echo -e "First Seen  : \e[36m$first_local\e[0m"
+    echo -e "Country     : \e[33m$country\e[0m"
+    echo -e "Latitude    : \e[35m$lat\e[0m"
+    echo -e "Longitude   : \e[35m$lon\e[0m"
   else
-    echo -e "${C_RED}No stats found for this PeerID on Nethermind Aztec Explorer.${C_RESET}"
+    echo -e "\e[1;31mNo stats found for this PeerID on Nethermind Aztec Explorer.\e[0m"
   fi
 else
-  echo -e "${C_RED}❌ No Aztec PeerID found.${C_RESET}"
+  echo "No Aztec PeerID found."
 fi
