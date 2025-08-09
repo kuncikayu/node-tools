@@ -5,7 +5,7 @@
 # Author: Keywood
 ########################################
 
-read -p "Enter the local port for the Aztec node (default: 8080): " LOCAL_PORT
+read -p "Please enter the local port for your Aztec node (default: 8080): " LOCAL_PORT
 LOCAL_PORT=${LOCAL_PORT:-8080}
 
 # ==== CONFIG ====
