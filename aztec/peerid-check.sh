@@ -1,45 +1,87 @@
 #!/bin/bash
 
-# Header
+#############################################
+#  AZTEC NODE PEERID & LOCATION CHECKER
+#  Author: Keywood
+#############################################
+
+# ==== COLORS ====
+C_RESET="\033[0m"
+C_GREEN="\033[32m"
+C_RED="\033[31m"
+C_BLUE="\033[34m"
+C_YELLOW="\033[33m"
+C_CYAN="\033[36m"
+C_PURPLE="\033[35m"
+
+clear
+
+# ==== BANNER ====
+echo -e "${C_PURPLE}"
 echo "=========================================="
 echo "   🌑 AZTEC NODE PEERID & LOCATION CHECK  "
 echo "=========================================="
-echo
+echo -e "${C_RESET}"
 
-# 1. Try to get peerID from container named 'aztec' using DiscV5 log
-peerid=$(sudo docker logs $(docker ps -q --filter "name=aztec" | head -1) 2>&1 | \
-  grep -m 1 -ai 'DiscV5 service started' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
-
-# 2. If not found, try any running container with 'aztec' in its image name
-if [ -z "$peerid" ]; then
-  container_id=$(sudo docker ps --filter "ancestor=$(sudo docker images --format '{{.Repository}}:{{.Tag}}' | grep aztec | head -1)" -q | head -1)
-  if [ ! -z "$container_id" ]; then
-    peerid=$(sudo docker logs $container_id 2>&1 | \
-      grep -m 1 -ai 'DiscV5 service started' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
+# ==== STEP 0: Dependency Check ====
+echo -e "${C_BLUE}Checking dependencies (docker, jq, curl)...${C_RESET}"
+for cmd in docker jq curl; do
+  if ! command -v $cmd &> /dev/null; then
+    echo -e "${C_RED}❌ Error: Command '$cmd' not found. Please install it first.${C_RESET}"
+    exit 1
   fi
+done
+echo -e "${C_GREEN}✓ Dependencies satisfied.${C_RESET}\n"
+
+# ==== STEP 1: Find Running Aztec Containers ====
+echo -e "${C_BLUE}Searching for active Aztec containers...${C_RESET}"
+container_ids=$( { sudo docker ps -q --filter "name=aztec"; \
+                   sudo docker ps -q --filter "ancestor=aztecprotocol/aztec-node"; } | sort -u )
+
+if [ -z "$container_ids" ]; then
+  echo -e "${C_RED}❌ No running Aztec Docker containers found.${C_RESET}"
+  exit 1
 fi
 
-# 3. As a last resort, search for any peerId log line in a container with "aztec" in the name
-if [ -z "$peerid" ]; then
-  peerid=$(sudo docker logs $(docker ps -q --filter "name=aztec" | head -1) 2>&1 | \
-    grep -m 1 -ai '"peerId"' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
-fi
+# ==== STEP 2: Extract PeerID from Container Logs ====
+peerid=""
+for id in $container_ids; do
+  echo -e "Trying container ID: ${C_YELLOW}${id}${C_RESET}..."
+  
+  peerid=$(sudo docker logs "$id" 2>&1 | grep -m 1 -ai 'DiscV5 service started' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
+  
+  if [ -z "$peerid" ]; then
+    peerid=$(sudo docker logs "$id" 2>&1 | grep -m 1 -ai '"peerId"' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
+  fi
+  
+  if [ -n "$peerid" ]; then
+    echo -e "${C_GREEN}✓ PeerID found!${C_RESET}"
+    break
+  fi
+done
 
-label=" ● PeerID"
-peerline="✓ $peerid"
-width=${#peerline}
-[ ${#label} -gt $width ] && width=${#label}
-line=$(printf '=%.0s' $(seq 1 $width))
-
+# ==== STEP 3: Display Results ====
 if [ -n "$peerid" ]; then
+  label=" ● PeerID"
+  peerline="✓ $peerid"
+  width=${#peerline}
+  [ ${#label} -gt $width ] && width=${#label}
+  line=$(printf '=%.0s' $(seq 1 $width))
+
+  echo
   echo "$line"
   echo -e "$label"
-  echo -e "\e[1;32m$peerline\e[0m"
-  echo "$line"
-  echo
+  echo -e "${C_GREEN}$peerline${C_RESET}"
+  echo -e "$line\n"
 
-  echo -e "\e[1;34mFetching stats from Nethermind Aztec Explorer...\e[0m"
-  response=$(curl -s "https://aztec.nethermind.io/api/peers?page_size=30000&latest=true")
+  echo -e "${C_BLUE}Fetching stats from Nethermind Aztec Explorer...${C_RESET}"
+  API_URL="https://aztec.nethermind.io/api/peers?page_size=30000&latest=true"
+  response=$(curl --connect-timeout 5 --max-time 15 -s "$API_URL")
+
+  if [ -z "$response" ] || ! echo "$response" | jq . > /dev/null 2>&1; then
+      echo -e "${C_RED}❌ Failed to fetch data from the explorer or the API response was invalid.${C_RESET}"
+      exit 1
+  fi
 
   stats=$(echo "$response" | jq -r --arg peerid "$peerid" '
     .peers[] | select(.id == $peerid) |
@@ -57,14 +99,15 @@ if [ -n "$peerid" ]; then
     last_local=$(date -d "$last" "+%Y-%m-%d - %H:%M" 2>/dev/null || echo "$last")
     first_local=$(date -d "$first" "+%Y-%m-%d - %H:%M" 2>/dev/null || echo "$first")
 
-    echo -e "Last Seen   : \e[36m$last_local\e[0m"
-    echo -e "First Seen  : \e[36m$first_local\e[0m"
-    echo -e "Country     : \e[33m$country\e[0m"
-    echo -e "Latitude    : \e[35m$lat\e[0m"
-    echo -e "Longitude   : \e[35m$lon\e[0m"
+    printf "%-12s: %s\n" "Last Seen"   "${C_CYAN}$last_local${C_RESET}"
+    printf "%-12s: %s\n" "First Seen"  "${C_CYAN}$first_local${C_RESET}"
+    printf "%-12s: %s\n" "Country"     "${C_YELLOW}$country${C_RESET}"
+    printf "%-12s: %s\n" "Latitude"    "${C_PURPLE}$lat${C_RESET}"
+    printf "%-12s: %s\n" "Longitude"   "${C_PURPLE}$lon${C_RESET}"
   else
-    echo -e "\e[1;31mNo stats found for this PeerID on Nethermind Aztec Explorer.\e[0m"
+    echo -e "${C_RED}No stats found for this PeerID on Nethermind Aztec Explorer.${C_RESET}"
+    echo -e "${C_YELLOW}💡 Your node might have just started. Try again in a few minutes.${C_RESET}"
   fi
 else
-  echo "No Aztec PeerID found."
+  echo -e "${C_RED}❌ No Aztec PeerID could be found in any container logs.${C_RESET}"
 fi
