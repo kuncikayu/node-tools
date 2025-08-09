@@ -1,12 +1,15 @@
 #!/bin/bash
 
 ########################################
-# Aztec Node Sync Watcher
+# Aztec Node Sync Watcher 
 # Author: Keywood
 ########################################
 
+# ==== INPUT PORT LOKAL ====
+read -p "Masukkan port lokal untuk node Aztec (default: 8080): " LOCAL_PORT
+LOCAL_PORT=${LOCAL_PORT:-8080}
+
 # ==== CONFIG ====
-LOCAL_PORT=8080
 REMOTE_RPC="https://rpc-aztec.keywood.site"
 AZTECSCAN_API_KEY="temporary-api-key"
 AZTECSCAN_API_URL="https://api.testnet.aztecscan.xyz/v1/${AZTECSCAN_API_KEY}/l2/ui/blocks-for-table"
@@ -26,9 +29,12 @@ C_CYAN="\033[36m"
 banner() {
     echo -e "${C_PURPLE}"
     echo "=========================================="
-    echo "    🌑 AZTEC NODE SYNC MONITOR By: Key    "
+    echo "    🌑 AZTEC NODE SYNC MONITOR (PERSONAL) "
     echo "=========================================="
     echo -e "${C_RESET}"
+    echo -e "   📍 Lokal Port : ${C_CYAN}$LOCAL_PORT${C_RESET}"
+    echo -e "   🌍 Remote RPC : ${C_GREEN}$REMOTE_RPC${C_RESET}"
+    echo
 }
 
 get_local_block() {
