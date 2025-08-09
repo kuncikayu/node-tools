@@ -2,7 +2,7 @@
 
 ########################################
 # Aztec Node Sync Watcher 
-# Author: Keywood (Fix by ChatGPT)
+# Author: Keywood
 ########################################
 
 read -p "Please enter the local port for your Aztec node (default: 8080): " LOCAL_PORT
@@ -50,7 +50,7 @@ get_remote_block() {
 
 get_aztecscan_block() {
     local BATCH_SIZE=20
-    local MAX_LOOPS=10   # batas loop supaya nggak infinite
+    local MAX_LOOPS=10
     local LOOP_COUNT=0
 
     local LATEST_BLOCK=$(curl -s --max-time 5 "$AZTECSCAN_API_URL?from=0&to=0" | jq -r '.[0].height')
