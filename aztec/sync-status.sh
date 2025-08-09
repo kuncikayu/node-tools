@@ -29,7 +29,7 @@ C_CYAN="\033[36m"
 banner() {
     echo -e "${C_PURPLE}"
     echo "=========================================="
-    echo "    🌑 AZTEC NODE SYNC MONITOR (PERSONAL) "
+    echo "    🌑 AZTEC NODE SYNC MONITOR By: Key    "
     echo "=========================================="
     echo -e "${C_RESET}"
     echo -e "   📍 Lokal Port : ${C_CYAN}$LOCAL_PORT${C_RESET}"
