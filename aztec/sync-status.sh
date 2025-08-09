@@ -2,7 +2,7 @@
 
 ########################################
 # Aztec Node Sync Watcher 
-# Author: Keywood
+# Author: Keywood (Fix by ChatGPT)
 ########################################
 
 read -p "Please enter the local port for your Aztec node (default: 8080): " LOCAL_PORT
@@ -37,38 +37,49 @@ banner() {
 }
 
 get_local_block() {
-    curl -s -X POST -H "Content-Type: application/json" \
+    curl -s --max-time 5 -X POST -H "Content-Type: application/json" \
     -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":1}' \
     http://localhost:$LOCAL_PORT | jq -r ".result.proven.number" 2>/dev/null
 }
 
 get_remote_block() {
-    curl -s -X POST -H "Content-Type: application/json" \
+    curl -s --max-time 5 -X POST -H "Content-Type: application/json" \
     -d '{"jsonrpc":"2.0","method":"node_getL2Tips","params":[],"id":1}' \
     $REMOTE_RPC | jq -r ".result.proven.number" 2>/dev/null
 }
 
 get_aztecscan_block() {
     local BATCH_SIZE=20
-    local LATEST_BLOCK=$(curl -s "$AZTECSCAN_API_URL?from=0&to=0" | jq -r '.[0].height')
+    local MAX_LOOPS=10   # batas loop supaya nggak infinite
+    local LOOP_COUNT=0
+
+    local LATEST_BLOCK=$(curl -s --max-time 5 "$AZTECSCAN_API_URL?from=0&to=0" | jq -r '.[0].height')
     if [[ -z "$LATEST_BLOCK" || "$LATEST_BLOCK" == "null" ]]; then
         echo "N/A"
         return
     fi
     local CURRENT_HEIGHT=$LATEST_BLOCK
-    while true; do
+
+    while (( LOOP_COUNT < MAX_LOOPS )); do
         local FROM_HEIGHT=$((CURRENT_HEIGHT - BATCH_SIZE + 1))
         [ $FROM_HEIGHT -lt 0 ] && FROM_HEIGHT=0
-        local MATCH=$(curl -s "$AZTECSCAN_API_URL?from=$FROM_HEIGHT&to=$CURRENT_HEIGHT" \
+
+        local MATCH=$(curl -s --max-time 5 "$AZTECSCAN_API_URL?from=$FROM_HEIGHT&to=$CURRENT_HEIGHT" \
             | jq -r '.[] | select(.blockStatus == 4) | .height' \
             | sort -nr | head -n1)
+
         if [[ -n "$MATCH" && "$MATCH" != "null" ]]; then
             echo "$MATCH"
             return
         fi
+
         CURRENT_HEIGHT=$((FROM_HEIGHT - 1))
         [ $CURRENT_HEIGHT -lt 0 ] && echo "N/A" && return
+
+        LOOP_COUNT=$((LOOP_COUNT + 1))
     done
+
+    echo "N/A"
 }
 
 percent() {
