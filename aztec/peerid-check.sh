@@ -5,14 +5,13 @@
 #  Author: Keywood
 #############################################
 
-# ==== FUNCTION TO CLEAN UP & EXIT ====
 cleanup_and_exit() {
   echo -e "\n${C_RESET}Script interrupted."
   exit 1
 }
 trap cleanup_and_exit INT TERM
 
-# ==== COLORS (Corrected for better compatibility) ====
+# ==== COLORS ====
 C_RESET=$'\033[0m'
 C_GREEN=$'\033[32m'
 C_RED=$'\033[31m'
@@ -54,13 +53,10 @@ fi
 peerid=""
 for id in $container_ids; do
   echo -e "Trying container ID: ${C_YELLOW}${id}${C_RESET}..."
-  
   peerid=$(sudo docker logs "$id" 2>&1 | grep -m 1 -ai 'DiscV5 service started' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
-  
   if [ -z "$peerid" ]; then
     peerid=$(sudo docker logs "$id" 2>&1 | grep -m 1 -ai '"peerId"' | grep -o '"peerId":"[^"]*"' | cut -d'"' -f4)
   fi
-  
   if [ -n "$peerid" ]; then
     echo -e "${C_GREEN}✓ PeerID found!${C_RESET}"
     break
@@ -106,11 +102,11 @@ if [ -n "$peerid" ]; then
     last_local=$(date -d "$last" "+%Y-%m-%d - %H:%M" 2>/dev/null || echo "$last")
     first_local=$(date -d "$first" "+%Y-%m-%d - %H:%M" 2>/dev/null || echo "$first")
 
-    printf "%-12s: %s\n" "Last Seen"   "${C_CYAN}$last_local${C_RESET}"
-    printf "%-12s: %s\n" "First Seen"  "${C_CYAN}$first_local${C_RESET}"
-    printf "%-12s: %s\n" "Country"     "${C_YELLOW}$country${C_RESET}"
-    printf "%-12s: %s\n" "Latitude"    "${C_PURPLE}$lat${C_RESET}"
-    printf "%-12s: %s\n" "Longitude"   "${C_PURPLE}$lon${C_RESET}"
+    printf "%-12s: \033[36m%s\033[0m\n" "Last Seen"   "$last_local"
+    printf "%-12s: \033[36m%s\033[0m\n" "First Seen"  "$first_local"
+    printf "%-12s: \033[33m%s\033[0m\n" "Country"     "$country"
+    printf "%-12s: \033[35m%s\033[0m\n" "Latitude"    "$lat"
+    printf "%-12s: \033[35m%s\033[0m\n" "Longitude"   "$lon"
   else
     echo -e "${C_RED}No stats found for this PeerID on Nethermind Aztec Explorer.${C_RESET}"
     echo -e "${C_YELLOW}💡 Your node might have just started. Try again in a few minutes.${C_RESET}"
