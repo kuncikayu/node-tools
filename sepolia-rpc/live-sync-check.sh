@@ -2,20 +2,22 @@
 
 GETH_RPC="http://127.0.0.1:8545"
 PRYSM_RPC="http://127.0.0.1:3500"
-PUBLIC_EXEC_RPC="https://ethereum-sepolia-rpc.publicnode.com"
-PUBLIC_CONS_RPC="https://ethereum-sepolia-beacon-api.publicnode.com"
+PUBLIC_EXEC_RPC="https://cloudflare-eth.com"
+PUBLIC_CONS_RPC="https://lodestar-mainnet.chainsafe.io"
 
-C_RESET="\033[0m"
-C_GREEN="\033[32m"
-C_RED="\033[31m"
-C_BLUE="\033[34m"
-C_YELLOW="\033[33m"
-C_CYAN="\033[36m"
+C_RESET=$'\033[0m'
+C_GREEN=$'\033[32m'
+C_RED=$'\033[31m'
+C_BLUE=$'\033[34m'
+C_YELLOW=$'\033[33m'
+C_CYAN=$'\033[36m'
 
 last_public_exec_block=0
 last_public_slot=0
 last_public_fetch=0
 public_interval=30
+
+export LC_NUMERIC=en_US.UTF-8
 
 while true; do
   timestamp=$(date +"[%H:%M:%S]")
@@ -80,8 +82,16 @@ while true; do
     behind_color=$C_RED
   fi
 
-  echo -e "$timestamp ${C_BLUE}LOCAL:${C_RESET} Geth ${C_YELLOW}$currentBlock${C_RESET} | peers:${C_CYAN}$peers${C_RESET} | $geth_status | NET:${C_GREEN}$last_public_exec_block${C_RESET} (diff:${diff_color}$diff${C_RESET})"
-  echo -e "       Prysm slot:${C_YELLOW}$head_slot${C_RESET} | $prysm_status | NET slot:${C_GREEN}$last_public_slot${C_RESET} (behind:${behind_color}$behind${C_RESET})"
+  local_block_fmt=$(printf "%'d" "$currentBlock")
+  net_block_fmt=$(printf "%'d" "$last_public_exec_block")
+  peers_fmt=$(printf "%'d" "$peers")
+  diff_fmt=$(printf "%'d" "$diff")
+  head_slot_fmt=$(printf "%'d" "$head_slot")
+  net_slot_fmt=$(printf "%'d" "$last_public_slot")
+  behind_fmt=$(printf "%'d" "$behind")
+
+  echo -e "$timestamp ${C_BLUE}LOCAL:${C_RESET} Geth ${C_YELLOW}$local_block_fmt${C_RESET} | peers:${C_CYAN}$peers_fmt${C_RESET} | $geth_status | NET:${C_GREEN}$net_block_fmt${C_RESET} (diff:${diff_color}$diff_fmt${C_RESET})"
+  echo -e "       Prysm slot:${C_YELLOW}$head_slot_fmt${C_RESET} | $prysm_status | NET slot:${C_GREEN}$net_slot_fmt${C_RESET} (behind:${behind_color}$behind_fmt${C_RESET})"
   echo    "--------------------------------------------------------------------------------"
 
   sleep 5
