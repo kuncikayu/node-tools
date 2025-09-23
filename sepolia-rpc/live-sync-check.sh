@@ -2,8 +2,8 @@
 
 GETH_RPC="http://127.0.0.1:8545"
 PRYSM_RPC="http://127.0.0.1:3500"
-PUBLIC_EXEC_RPC="https://cloudflare-eth.com"
-PUBLIC_CONS_RPC="https://lodestar-mainnet.chainsafe.io"
+PUBLIC_EXEC_RPC="https://ethereum-sepolia-rpc.publicnode.com"
+PUBLIC_CONS_RPC="https://ethereum-sepolia-beacon-api.publicnode.com"
 
 C_RESET=$'\033[0m'
 C_GREEN=$'\033[32m'
