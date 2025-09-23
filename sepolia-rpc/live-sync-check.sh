@@ -68,13 +68,25 @@ while true; do
     last_public_fetch=$now
   fi
 
-  printf "%s ${C_BLUE}LOCAL:${C_RESET} Geth %-10s | peers:%-3s | %-9b | NET:%-10s (diff:%-6s)\n" \
-    "$timestamp" "$currentBlock" "$peers" "$geth_status" "$last_public_exec_block" "$((last_public_exec_block - currentBlock))"
+  if (( diff == 0 )); then
+    diff_color=$C_GREEN
+  else
+    diff_color=$C_RED
+  fi
 
-  printf "       Prysm slot:%-10s | %-9b | NET slot:%-10s (behind:%-6s)\n" \
-    "$head_slot" "$prysm_status" "$last_public_slot" "$((last_public_slot - head_slot))"
+  if (( behind == 0 )); then
+    behind_color=$C_GREEN
+  else
+    behind_color=$C_RED
+  fi
+
+  printf "%s ${C_BLUE}LOCAL:${C_RESET} Geth ${C_YELLOW}%-10s${C_RESET} | peers:${C_CYAN}%-3s${C_RESET} | %-9b | NET:${C_GREEN}%-10s${C_RESET} (diff:${diff_color}%-6s${C_RESET})\n" \
+    "$timestamp" "$currentBlock" "$peers" "$geth_status" "$last_public_exec_block" "$diff"
+
+  printf "       Prysm slot:${C_YELLOW}%-10s${C_RESET} | %-9b | NET slot:${C_GREEN}%-10s${C_RESET} (behind:${behind_color}%-6s${C_RESET})\n" \
+    "$head_slot" "$prysm_status" "$last_public_slot" "$behind"
 
   echo "--------------------------------------------------------------------------------"
 
-  sleep 15
+  sleep 5
 done
