@@ -80,13 +80,9 @@ while true; do
     behind_color=$C_RED
   fi
 
-  printf "%s ${C_BLUE}LOCAL:${C_RESET} Geth ${C_YELLOW}%-10s${C_RESET} | peers:${C_CYAN}%-3s${C_RESET} | %-9b | NET:${C_GREEN}%-10s${C_RESET} (diff:${diff_color}%-6s${C_RESET})\n" \
-    "$timestamp" "$currentBlock" "$peers" "$geth_status" "$last_public_exec_block" "$diff"
-
-  printf "       Prysm slot:${C_YELLOW}%-10s${C_RESET} | %-9b | NET slot:${C_GREEN}%-10s${C_RESET} (behind:${behind_color}%-6s${C_RESET})\n" \
-    "$head_slot" "$prysm_status" "$last_public_slot" "$behind"
-
-  echo "--------------------------------------------------------------------------------"
+  echo -e "$timestamp ${C_BLUE}LOCAL:${C_RESET} Geth ${C_YELLOW}$currentBlock${C_RESET} | peers:${C_CYAN}$peers${C_RESET} | $geth_status | NET:${C_GREEN}$last_public_exec_block${C_RESET} (diff:${diff_color}$diff${C_RESET})"
+  echo -e "       Prysm slot:${C_YELLOW}$head_slot${C_RESET} | $prysm_status | NET slot:${C_GREEN}$last_public_slot${C_RESET} (behind:${behind_color}$behind${C_RESET})"
+  echo    "--------------------------------------------------------------------------------"
 
   sleep 5
 done
