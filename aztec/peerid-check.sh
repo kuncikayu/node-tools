@@ -78,7 +78,7 @@ if [ -n "$peerid" ]; then
   echo -e "$line\n"
 
   echo -e "${C_BLUE}Fetching stats from Nethermind Aztec Explorer...${C_RESET}"
-  API_URL="https://aztec.nethermind.io/api/peers?page_size=30000&latest=true"
+  API_URL="https://aztec.nethermind.io/api/peers?page_size=25&latest=true"
   response=$(curl --connect-timeout 5 --max-time 15 -s "$API_URL")
 
   if [ -z "$response" ] || ! echo "$response" | jq . > /dev/null 2>&1; then
